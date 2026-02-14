@@ -80,20 +80,29 @@ async function startBot() {
 
             if (!isOwner) return;
 
-            // Fitur 2: Ambil Member
-            if (body === '.ambilmember' && from.endsWith('@g.us')) {
-                const meta = await getGroupMetadata(sock, from);
-                const jids = meta.participants.map(p => p.id);
-                const vcf = generateVCF(jids, meta.name);
-                const path = `./data/members_${Date.now()}.vcf`;
-                fs.writeFileSync(path, vcf);
-                await sock.sendMessage(sender, { 
-                    document: fs.readFileSync(path), 
-                    fileName: `Members_${meta.name}.vcf`, 
-                    mimetype: 'text/vcard' 
-                });
-                fs.unlinkSync(path);
-            }
+            // Fitur 2: Ambil Member & Kirim VCF ke Owner
+if (body === '.ambilmember' && from.endsWith('@g.us')) {
+    // 1. Ambil metadata grup (nama & daftar peserta)
+    const meta = await getGroupMetadata(sock, from);
+    const jids = meta.participants.map(p => p.id);
+    
+    // 2. Generate konten file VCF
+    const vcf = generateVCF(jids, meta.name);
+    
+    // 3. Simpan sementara di folder data
+    const path = `./data/members_${Date.now()}.vcf`;
+    fs.writeFileSync(path, vcf);
+    
+    // 4. Kirim file ke Owner (Private Chat)
+    await sock.sendMessage(sender, { 
+        document: fs.readFileSync(path), 
+        fileName: `Members_${meta.name}.vcf`, 
+        mimetype: 'text/vcard' 
+    });
+    
+    // 5. Hapus file sampah setelah terkirim
+    fs.unlinkSync(path);
+}
 
             // Fitur 3: Add VCF to Group
             if (body.startsWith('.addvcfto')) {
